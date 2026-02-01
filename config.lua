@@ -10,28 +10,31 @@ vim.g.loaded_netrw = 1
 vim.g.loaded_netrwPlugin = 1
 vim.opt.termguicolors = true
 
--- Enable powershell as your default shell
-vim.opt.shell = "pwsh.exe"
-vim.opt.shellcmdflag =
-"-NoLogo -NoProfile -ExecutionPolicy RemoteSigned -Command [Console]::InputEncoding=[Console]::OutputEncoding=[System.Text.Encoding]::UTF8;"
-vim.cmd [[
-let &shellredir = '2>&1 | Out-File -Encoding UTF8 %s; exit $LastExitCode'
-let &shellpipe = '2>&1 | Out-File -Encoding UTF8 %s; exit $LastExitCode'
-set shellquote= shellxquote=
+local is_windows = vim.fn.has("win32") == 1
+
+if is_windows then
+    -- Enable powershell as your default shell
+    vim.opt.shell = "pwsh.exe"
+    vim.opt.shellcmdflag =
+    "-NoLogo -NoProfile -ExecutionPolicy RemoteSigned -Command [Console]::InputEncoding=[Console]::OutputEncoding=[System.Text.Encoding]::UTF8;"
+    vim.cmd [[
+    let &shellredir = '2>&1 | Out-File -Encoding UTF8 %s; exit $LastExitCode'
+    let &shellpipe = '2>&1 | Out-File -Encoding UTF8 %s; exit $LastExitCode'
+    set shellquote= shellxquote=
 ]]
 
--- Set a compatible clipboard manager
-vim.g.clipboard = {
-    copy = {
-        ["+"] = "win32yank.exe -i --crlf",
-        ["*"] = "win32yank.exe -i --crlf",
-    },
-    paste = {
-        ["+"] = "win32yank.exe -o --lf",
-        ["*"] = "win32yank.exe -o --lf",
-    },
-}
-
+    -- Set a compatible clipboard manager
+    vim.g.clipboard = {
+        copy = {
+            ["+"] = "win32yank.exe -i --crlf",
+            ["*"] = "win32yank.exe -i --crlf",
+        },
+        paste = {
+            ["+"] = "win32yank.exe -o --lf",
+            ["*"] = "win32yank.exe -o --lf",
+        },
+    }
+end
 -- Undo/backup
 vim.opt.undofile = true
 vim.opt.backup = true
@@ -49,7 +52,7 @@ vim.opt.wrap = true
 
 -- Options from old .vimrc
 vim.opt.ruler = true
-vim.opt.lazyredraw = false 
+vim.opt.lazyredraw = false
 vim.opt.foldcolumn = "1"
 vim.opt.showcmd = true
 
