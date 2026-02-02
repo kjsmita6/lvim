@@ -115,7 +115,7 @@ lvim.plugins = {
             }
         end
     },
-    { 
+    {
         "ray-x/lsp_signature.nvim",
         config = function()
             require"lsp_signature".setup({
@@ -189,6 +189,15 @@ lvim.plugins = {
     {
         "mfukar/robotframework-vim",
         ft = "robot",
+    },
+    {
+        "iamcco/markdown-preview.nvim",
+        cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
+        build = "cd app && npm install",
+        init = function()
+            vim.g.mkdp_filetypes = { "markdown" }
+        end,
+        ft = { "markdown" },
     },
 
 }
