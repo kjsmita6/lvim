@@ -84,7 +84,6 @@ lvim.autocommands = {
 }
 
 lvim.plugins = {
-    { "catppuccin/nvim", name = "catppuccin", priority = 1000, },
     { "lukas-reineke/indent-blankline.nvim", enabled = false, },
     { "hiphish/rainbow-delimiters.nvim" },
     { "nvim-tree/nvim-web-devicons", opts = {} },
@@ -199,6 +198,9 @@ lvim.plugins = {
         end,
         ft = { "markdown" },
     },
+    {
+        "akinsho/toggleterm.nvim",
+    },
 
 }
 
@@ -274,7 +276,7 @@ require('no-neck-pain').setup({
     -- (of course, font height is measured in points (pt), not pixels...)
     --
     -- The average width of Cascadia Mono NF is 9.38 chars, so if we want to display 127 chars it would be the multiple.
-    width = 167,
+    -- width = 167,
     autocmds = {
         enableOnVimEnter = 'safe',
     },
@@ -317,6 +319,13 @@ lvim.builtin.lualine.sections.lualine_c = { components.filename }
 lvim.builtin.lualine.sections.lualine_x = { components.diagnostics, components.filetype, components.lsp }
 lvim.builtin.lualine.sections.lualine_y = { components.progress }
 lvim.builtin.lualine.sections.lualine_z = { components.location }
+
+-- Toggleterm setup --
+require("toggleterm").setup({
+    direction = "horizontal",
+})
+lvim.keys.normal_mode["<C-Bslash>"] = "<cmd>ToggleTerm direction=horizontal<cr>"
+lvim.keys.insert_mode["<C-Bslash>"] = "<cmd>ToggleTerm direction=horizontal<cr>"
 
 -- Other bindings
 local function organize_imports()
@@ -385,3 +394,4 @@ lvim.autocommands = {
 --         disable = { "robot" },
 --     },
 -- })
+
