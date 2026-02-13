@@ -395,3 +395,5 @@ lvim.autocommands = {
 --     },
 -- })
 
+vim.api.nvim_exec2("command W :execute ':silent w !sudo tee % > /dev/null' | edit!", {})
+
