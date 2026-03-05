@@ -65,14 +65,6 @@ local function clean_extra_space()
     vim.fn.setreg('/', old_query)
 end
 
--- Paste mode indicator
-local function has_paste()
-    if vim.o.paste then
-        return "PASTE MODE"
-    end
-    return ""
-end
-
 lvim.autocommands = {
     {
         "BufWritePre",
@@ -312,20 +304,33 @@ lvim.keys.normal_mode["<S-Up>"] = require("smart-splits").move_cursor_up
 lvim.keys.normal_mode["<S-Down>"] = require("smart-splits").move_cursor_down
 
 -- Statusline
+
+-- Paste mode indicator
+local function has_paste()
+    if vim.o.paste then
+        return "PASTE MODE"
+    end
+    return ""
+end
+
 local components = require("lvim.core.lualine.components")
 lvim.builtin.lualine.sections.lualine_a = { has_paste, "mode" }
-lvim.builtin.lualine.sections.lualine_b = { components.branch, components.diff }
-lvim.builtin.lualine.sections.lualine_c = { components.filename }
-lvim.builtin.lualine.sections.lualine_x = { components.diagnostics, components.filetype, components.lsp }
-lvim.builtin.lualine.sections.lualine_y = { components.progress }
-lvim.builtin.lualine.sections.lualine_z = { components.location }
-
--- Toggleterm setup --
-require("toggleterm").setup({
-    direction = "horizontal",
-})
-lvim.keys.normal_mode["<C-Bslash>"] = "<cmd>ToggleTerm direction=horizontal<cr>"
-lvim.keys.insert_mode["<C-Bslash>"] = "<cmd>ToggleTerm direction=horizontal<cr>"
+-- lvim.builtin.lualine.sections.lualine_b = { components.branch, components.diff }
+lvim.builtin.lualine.sections.lualine_c = {
+    {
+        "filename",
+        file_status = true,
+        newfile_status = true,
+        path = 2,
+        symbols = {
+            modified = '[*]',
+            readonly = '[READONLY]',
+        },
+    },
+}
+-- lvim.builtin.lualine.sections.lualine_x = { components.diagnostics, components.filetype, components.lsp }
+-- lvim.builtin.lualine.sections.lualine_y = { components.progress }
+-- lvim.builtin.lualine.sections.lualine_z = { components.location }
 
 -- Other bindings
 local function organize_imports()
