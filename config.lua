@@ -108,11 +108,13 @@ lvim.plugins = {
     },
     {
         "ray-x/lsp_signature.nvim",
-        config = function()
-            require"lsp_signature".setup({
-                -- …
-            })
-        end,
+        event = "InsertEnter",
+        opts = {
+            bind = true,
+            handler_opts = {
+                border = "rounded",
+            },
+        },
     },
     {
         "ethanholz/nvim-lastplace",
@@ -193,7 +195,35 @@ lvim.plugins = {
     {
         "akinsho/toggleterm.nvim",
     },
+    { "catppuccin/nvim", name = "catppuccin", priority = 1000 },
+    -- {
+    --     "dense-analysis/ale",
+    --     config = function()
+    --         local g = vim.g
+    --         g.ale_disable_lsp = 1
+    --         g.ale_linters = {
+    --             javascript = { "eslint" },
+    --             sh = { "shellcheck" },
+    --         }
+    --     end
+    -- },
+    { "nvim-mini/mini.comment", version = false},
+    { "numToStr/Comment.nvim", enabled = false }
+}
 
+-- Comments
+local mini_comment = require("mini.comment")
+mini_comment.setup({
+    mappings = {
+        comment = '',
+        comment_line = '',
+        comment_visual = '',
+        textobject = '',
+    },
+})
+
+lvim.builtin.which_key.mappings['/'] = {
+    "<cmd>lua require('mini.comment').toggle_lines(vim.fn.getcurpos('.')[2], vim.fn.getcurpos('.')[2])<cr>", "Toggle Comment"
 }
 
 -- Noice
@@ -253,9 +283,9 @@ lvim.builtin.which_key.mappings["x"] = {
     o = { "<cmd>Trouble symbols toggle focus=false<cr>", "Symbols" }
 }
 
-lvim.lsp.on_attach_callback = function(client, bufnr)
-    require"lsp_signature".on_attach()
-end
+-- lvim.lsp.on_attach_callback = function(client, bufnr)
+    -- require"lsp_signature".on_attach()
+-- end
 
 -- No neck pain
 require('no-neck-pain').setup({
@@ -277,6 +307,13 @@ require('no-neck-pain').setup({
 lvim.builtin.treesitter.rainbow.enable = true
 -- lvim.colorscheme = 'catppuccin-macchiato'
 
+-- Dark theme
+-- colorscheme "catppuccin-macchiato"
+
+-- Light theme
+lvim.colorscheme = "catppuccin-latte"
+
+
 lvim.builtin.nvimtree.setup.view.side = "left"
 lvim.builtin.nvimtree.setup.view.width = 30
 
@@ -286,7 +323,7 @@ local lspconfig = require("lspconfig")
 lspconfig.angularls.setup {
     filetypes = { 'typescript', 'html', 'typescriptreact', 'typescript.tsx', 'htmlangular', },
 }
-vim.lsp.enable("robotframework_ls")
+-- vim.lsp.enable("robotframework_ls")
 
 -- vim.list_extend(lvim.lsp.automatic_configuration.skipped_servers, { "autotools-language-server" })
 
@@ -315,7 +352,16 @@ end
 
 local components = require("lvim.core.lualine.components")
 lvim.builtin.lualine.sections.lualine_a = { has_paste, "mode" }
--- lvim.builtin.lualine.sections.lualine_b = { components.branch, components.diff }
+lvim.builtin.lualine.sections.lualine_b = {
+    {
+        "branch",
+        fmt = function(str)
+            -- Only show last characters of the branch if too long
+            return str:sub(-48)
+        end,
+    },
+    components.diff,
+}
 lvim.builtin.lualine.sections.lualine_c = {
     {
         "filename",
