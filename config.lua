@@ -69,7 +69,7 @@ lvim.autocommands = {
     {
         "BufWritePre",
         {
-            pattern = { "*.txt","*.js","*.py","*.wiki","*.sh","*.coffee","*.ts" },
+            pattern = { "*.txt", "*.js", "*.py", "*.wiki", "*.sh", "*.coffee", "*.ts" },
             callback = clean_extra_space
         }
     }
@@ -77,11 +77,14 @@ lvim.autocommands = {
 
 lvim.plugins = {
     { "lukas-reineke/indent-blankline.nvim", enabled = false, },
-    { "hiphish/rainbow-delimiters.nvim" },
-    { "nvim-tree/nvim-web-devicons", opts = {} },
+    {
+        "hiphish/rainbow-delimiters.nvim",
+        enabled = false,
+    },
+    { "nvim-tree/nvim-web-devicons",         opts = {} },
     { 'mrjones2014/smart-splits.nvim' },
     { "nvim-treesitter/nvim-treesitter" },
-    { "shortcuts/no-neck-pain.nvim", version = "*" },
+    { "shortcuts/no-neck-pain.nvim",         version = "*" },
     {
         "windwp/nvim-ts-autotag",
         config = function()
@@ -92,12 +95,12 @@ lvim.plugins = {
         "rmagatti/goto-preview",
         config = function()
             require('goto-preview').setup {
-                width = 120; -- Width of the floating window
-                height = 25; -- Height of the floating window
-                default_mappings = false; -- Bind default mappings
-                debug = false; -- Print debug information
-                opacity = nil; -- 0-100 opacity level of the floating window where 100 is fully transparent.
-                post_open_hook = nil -- A function taking two arguments, a buffer and a window to be ran as a hook.
+                width = 120,              -- Width of the floating window
+                height = 25,              -- Height of the floating window
+                default_mappings = false, -- Bind default mappings
+                debug = false,            -- Print debug information
+                opacity = nil,            -- 0-100 opacity level of the floating window where 100 is fully transparent.
+                post_open_hook = nil      -- A function taking two arguments, a buffer and a window to be ran as a hook.
                 -- You can use "default_mappings = true" setup option
                 -- Or explicitly set keybindings
                 -- vim.cmd("nnoremap gpd <cmd>lua require('goto-preview').goto_preview_definition()<CR>")
@@ -195,7 +198,7 @@ lvim.plugins = {
     {
         "akinsho/toggleterm.nvim",
     },
-    { "catppuccin/nvim", name = "catppuccin", priority = 1000 },
+    { "catppuccin/nvim",        name = "catppuccin", priority = 1000 },
     -- {
     --     "dense-analysis/ale",
     --     config = function()
@@ -207,9 +210,71 @@ lvim.plugins = {
     --         }
     --     end
     -- },
-    { "nvim-mini/mini.comment", version = false},
-    { "numToStr/Comment.nvim", enabled = false }
+    { "nvim-mini/mini.comment", version = false },
+    { "numToStr/Comment.nvim",  enabled = false },
+    {
+        "hat0uma/csvview.nvim",
+        ---@module "csvview"
+        ---@type CsvView.Options
+        opts = {
+            parser = {
+                comments = { "#", "//" },
+                delimiter = {
+                    ft = {
+                        csv = ",", -- Always use comma for .csv files
+                        tsv = "\t", -- Always use tab for .tsv files
+                    },
+                    fallbacks = { -- Try these delimiters in order for other files
+                        ",",    -- Comma (most common)
+                        "\t",   -- Tab
+                        ";",    -- Semicolon
+                        "|",    -- Pipe
+                        ":",    -- Colon
+                        " ",    -- Space
+                    },
+                },
+            },
+            keymaps = {
+                -- Text objects for selecting fields
+                textobject_field_inner = { "if", mode = { "o", "x" } },
+                textobject_field_outer = { "af", mode = { "o", "x" } },
+                -- Excel-like navigation:
+                -- Use <Tab> and <S-Tab> to move horizontally between fields.
+                -- Use <Enter> and <S-Enter> to move vertically between rows and place the cursor at the end of the field.
+                -- Note: In terminals, you may need to enable CSI-u mode to use <S-Tab> and <S-Enter>.
+                jump_next_field_end = { "<Tab>", mode = { "n", "v" } },
+                jump_prev_field_end = { "<S-Tab>", mode = { "n", "v" } },
+                jump_next_row = { "<Enter>", mode = { "n", "v" } },
+                jump_prev_row = { "<S-Enter>", mode = { "n", "v" } },
+            },
+        },
+        view = {
+            header_lnum = true, -- Auto-detect header (default)
+            sticky_header = {
+                enabled = true,
+                separator = "─", -- Separator line character
+            },
+        },
+        cmd = { "CsvViewEnable", "CsvViewDisable", "CsvViewToggle" },
+    },
 }
+
+-- Dark theme
+-- colorscheme "catppuccin-macchiato"
+
+-- Light theme
+lvim.colorscheme = "catppuccin-latte"
+
+-- CsvView
+local csv_group = vim.api.nvim_create_augroup("CsvViewAutoEnable", { clear = true })
+
+vim.api.nvim_create_autocmd("FileType", {
+    group = csv_group,
+    pattern = { "csv", "tsv" },
+    callback = function()
+        require("csvview").enable()
+    end,
+})
 
 -- Comments
 local mini_comment = require("mini.comment")
@@ -223,7 +288,8 @@ mini_comment.setup({
 })
 
 lvim.builtin.which_key.mappings['/'] = {
-    "<cmd>lua require('mini.comment').toggle_lines(vim.fn.getcurpos('.')[2], vim.fn.getcurpos('.')[2])<cr>", "Toggle Comment"
+    "<cmd>lua require('mini.comment').toggle_lines(vim.fn.getcurpos('.')[2], vim.fn.getcurpos('.')[2])<cr>",
+    "Toggle Comment"
 }
 
 -- Noice
@@ -269,7 +335,7 @@ lvim.builtin.which_key.mappings["t"] = {
     O = { "<cmd>Neotest summary<cr>", "Summary Window" },
 }
 
-lvim.builtin.which_key.mappings["S"]= {
+lvim.builtin.which_key.mappings["S"] = {
     name = "Session",
     c = { "<cmd>lua require('persistence').load()<cr>", "Restore last session for current dir" },
     l = { "<cmd>lua require('persistence').load({ last = true })<cr>", "Restore last session" },
@@ -284,38 +350,60 @@ lvim.builtin.which_key.mappings["x"] = {
 }
 
 -- lvim.lsp.on_attach_callback = function(client, bufnr)
-    -- require"lsp_signature".on_attach()
+-- require"lsp_signature".on_attach()
 -- end
 
 -- No neck pain
+
+-- Update blend value whenever colorscheme changes
+local function get_blend()
+    local current_scheme = vim.g.colors_name or ""
+    -- print('colorscheme is ' .. current_scheme)
+    if current_scheme == "catppuccin-latte" then
+        return -0.2
+    elseif current_scheme == "catppuccin-macchiato" then
+        return 0.3
+    else
+        return 0.0
+    end
+end
+local blend = get_blend()
+
+vim.api.nvim_create_autocmd("ColorScheme", {
+    callback = function()
+        blend = get_blend()
+    end
+})
+
 require('no-neck-pain').setup({
     -- 50% the width of the monitor
-    -- Ultrawide: 3440 / 2 = 1720 
+    -- Ultrawide: 3440 / 2 = 1720
     -- Standard: 1920 / 2 = 960
-    -- 
+    --
     -- The documentation is unclear, but the value of "width" might represent the number of characters, not pixels.
     -- The width of a font is usually estimated to be 1.09 times the height of the font (e.g., 12).
     -- (of course, font height is measured in points (pt), not pixels...)
     --
     -- The average width of Cascadia Mono NF is 9.38 chars, so if we want to display 127 chars it would be the multiple.
-    -- width = 167,
+    width = 167,
     autocmds = {
         enableOnVimEnter = 'safe',
+    },
+    buffers = {
+        colors = {
+            blend = -0.3,
+        },
     },
 })
 
 lvim.builtin.treesitter.rainbow.enable = true
--- lvim.colorscheme = 'catppuccin-macchiato'
-
--- Dark theme
--- colorscheme "catppuccin-macchiato"
-
--- Light theme
-lvim.colorscheme = "catppuccin-latte"
-
 
 lvim.builtin.nvimtree.setup.view.side = "left"
 lvim.builtin.nvimtree.setup.view.width = 30
+
+vim.g.rainbow_delimiters = {
+    blacklist = { 'markdown', 'nofile', 'prompt' },
+}
 
 -- LSP configs --
 local lspconfig = require("lspconfig")
@@ -323,6 +411,15 @@ local lspconfig = require("lspconfig")
 lspconfig.angularls.setup {
     filetypes = { 'typescript', 'html', 'typescriptreact', 'typescript.tsx', 'htmlangular', },
 }
+
+lspconfig.groovyls.setup({
+    capabilities = (function()
+        local caps = vim.lsp.protocol.make_client_capabilities()
+        caps.general = caps.general or {}
+        caps.general.positionEncodings = { 'utf-16' }
+        return caps
+    end)(),
+})
 -- vim.lsp.enable("robotframework_ls")
 
 -- vim.list_extend(lvim.lsp.automatic_configuration.skipped_servers, { "autotools-language-server" })
@@ -382,7 +479,7 @@ lvim.builtin.lualine.sections.lualine_c = {
 local function organize_imports()
     local params = {
         command = "_typescript.organizeImports",
-        arguments = {vim.api.nvim_buf_get_name(0)},
+        arguments = { vim.api.nvim_buf_get_name(0) },
         title = ""
     }
     vim.lsp.client.exec_cmd(params)
@@ -439,12 +536,27 @@ lvim.autocommands = {
 -- })
 
 
--- require("nvim-treesitter.configs").setup({
---     highlight = {
---         enable = true,
---         disable = { "robot" },
---     },
--- })
+require("nvim-treesitter.configs").setup({
+    highlight = {
+        enable = true,
+        disable = { "robot" },
+    },
+})
+
+local formatters = require 'lvim.lsp.null-ls.formatters'
+formatters.setup({
+    {
+        name = 'prettier',
+        filetypes = {
+            'typescript',
+            'typescriptreact',
+            'javascript',
+            'javascriptreact',
+            'json',
+            'html',
+            'css',
+        },
+    },
+})
 
 vim.api.nvim_exec2("command W :execute ':silent w !sudo tee % > /dev/null' | edit!", {})
-
