@@ -82,7 +82,8 @@ lvim.plugins = {
         enabled = false,
     },
     { "nvim-tree/nvim-web-devicons",         opts = {} },
-    { 'mrjones2014/smart-splits.nvim' },
+    -- v3 requires nvim 0.11+; pin to last v2 release until nvim is upgraded
+    { 'mrjones2014/smart-splits.nvim', tag = "v2.1.1-final" },
     { "nvim-treesitter/nvim-treesitter" },
     { "shortcuts/no-neck-pain.nvim",         version = "*" },
     {
@@ -111,6 +112,8 @@ lvim.plugins = {
     },
     {
         "ray-x/lsp_signature.nvim",
+        -- newer commits use the nvim 0.11 str_utfindex signature; pin until nvim is upgraded
+        commit = "af7e4074d85d785cf6614352ba9ad3b28a1f8a56",
         event = "InsertEnter",
         opts = {
             bind = true,
