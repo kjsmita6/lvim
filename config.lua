@@ -38,7 +38,7 @@ end
 -- Undo/backup
 vim.opt.undofile = true
 vim.opt.backup = true
-vim.opt.backupdir = vim.fn.stdpath("data") .. "\\backup"
+vim.opt.backupdir = vim.fn.stdpath("data") .. "/backup"
 -- vim.opt.swapfile = true
 
 -- Spacing
@@ -250,23 +250,67 @@ lvim.plugins = {
                 jump_next_row = { "<Enter>", mode = { "n", "v" } },
                 jump_prev_row = { "<S-Enter>", mode = { "n", "v" } },
             },
-        },
-        view = {
-            header_lnum = true, -- Auto-detect header (default)
-            sticky_header = {
-                enabled = true,
-                separator = "─", -- Separator line character
+            view = {
+                header_lnum = true, -- Auto-detect header (default)
+                sticky_header = {
+                    enabled = true,
+                    separator = "─", -- Separator line character
+                },
             },
         },
         cmd = { "CsvViewEnable", "CsvViewDisable", "CsvViewToggle" },
     },
 }
 
--- Dark theme
--- colorscheme "catppuccin-macchiato"
+-- Returns the trimmed stdout of a command, or nil if it is missing or fails
+local function cmd_output(cmd)
+    if vim.fn.executable(cmd[1]) ~= 1 then
+        return nil
+    end
+    local out = vim.fn.system(cmd)
+    if vim.v.shell_error ~= 0 then
+        return nil
+    end
+    return vim.trim(out)
+end
 
--- Light theme
-lvim.colorscheme = "catppuccin-latte"
+local function system_is_dark()
+    if vim.fn.has("mac") == 1 then
+        -- prints "Dark" in dark mode; exits non-zero (key missing) in light mode
+        local out = cmd_output({ "defaults", "read", "-g", "AppleInterfaceStyle" })
+        return out ~= nil and out:match("Dark") ~= nil
+    elseif vim.fn.has("unix") == 1 then
+        -- Cinnamon (Mint). The keys don't exist on other desktops, so the commands fail
+        -- and this falls through to light. org.gnome.desktop.interface color-scheme is
+        -- deliberately not used: on Mint it stays 'prefer-dark' even in light mode.
+        local scheme = cmd_output({ "gsettings", "get", "org.x.apps.portal", "color-scheme" })
+        if scheme and scheme:match("prefer%-dark") then
+            return true
+        end
+        -- Otherwise infer from the GTK theme name, e.g. 'Mint-L-Dark-Blue'
+        local theme = cmd_output({ "gsettings", "get", "org.cinnamon.desktop.interface", "gtk-theme" })
+        return theme ~= nil and theme:lower():match("dark") ~= nil
+    end
+    return false
+end
+
+-- Follow the system appearance: macchiato in dark mode, latte in light mode.
+-- Detected on macOS and Linux Mint (Cinnamon); anything else falls back to latte.
+local function system_colorscheme()
+    return system_is_dark() and "catppuccin-macchiato" or "catppuccin-latte"
+end
+
+lvim.colorscheme = system_colorscheme()
+
+-- Re-check when nvim regains focus so a system switch is picked up without a restart
+vim.api.nvim_create_autocmd("FocusGained", {
+    callback = function()
+        local scheme = system_colorscheme()
+        if scheme ~= vim.g.colors_name then
+            vim.cmd.colorscheme(scheme)
+        end
+    end,
+})
 
 -- CsvView
 local csv_group = vim.api.nvim_create_augroup("CsvViewAutoEnable", { clear = true })
@@ -358,27 +402,32 @@ lvim.builtin.which_key.mappings["x"] = {
 
 -- No neck pain
 
--- Update blend value whenever colorscheme changes
-local function get_blend()
-    local current_scheme = vim.g.colors_name or ""
-    -- print('colorscheme is ' .. current_scheme)
-    if current_scheme == "catppuccin-latte" then
-        return -0.2
-    elseif current_scheme == "catppuccin-macchiato" then
-        return 0.3
-    else
-        return 0.0
+-- Side buffer color per colorscheme, taken from the catppuccin palette:
+-- latte uses the next darker step from base (mantle), macchiato the next lighter (surface0).
+local function get_background()
+    local palettes = require("catppuccin.palettes")
+    local scheme = vim.g.colors_name or ""
+    if scheme == "catppuccin-latte" then
+        return palettes.get_palette("latte").mantle
+    elseif scheme == "catppuccin-macchiato" then
+        return palettes.get_palette("macchiato").surface0
     end
+    -- other schemes: fall back to the theme background (no visible margins)
+    local bg = vim.api.nvim_get_hl(0, { name = "Normal", link = false }).bg
+    return bg and string.format("#%06x", bg) or nil
 end
-local blend = get_blend()
 
-vim.api.nvim_create_autocmd("ColorScheme", {
-    callback = function()
-        blend = get_blend()
-    end
-})
+-- no-neck-pain mutates the opts table it is given (it caches per-side
+-- colors in it), so rebuild the buffers section on every colorscheme change.
+local function nnp_buffers()
+    return {
+        colors = {
+            background = get_background(),
+        },
+    }
+end
 
-require('no-neck-pain').setup({
+local nnp_opts = {
     -- 50% the width of the monitor
     -- Ultrawide: 3440 / 2 = 1720
     -- Standard: 1920 / 2 = 960
@@ -392,11 +441,31 @@ require('no-neck-pain').setup({
     autocmds = {
         enableOnVimEnter = 'safe',
     },
-    buffers = {
-        colors = {
-            blend = -0.3,
-        },
-    },
+    buffers = nnp_buffers(),
+}
+
+require('no-neck-pain').setup(nnp_opts)
+
+-- Runs before the plugin's own (scheduled) reload, which reuses nnp_opts.
+vim.api.nvim_create_autocmd("ColorScheme", {
+    callback = function()
+        nnp_opts.buffers = nnp_buffers()
+        -- keep the live config current too, so enabling later uses the right color
+        if _G.NoNeckPain and _G.NoNeckPain.config then
+            _G.NoNeckPain.config = require('no-neck-pain.config').defaults(vim.deepcopy(nnp_opts))
+        end
+        -- Queued after the plugin's own scheduled reload. That reload only updates its
+        -- config; existing side windows keep their old highlights, so repaint them.
+        vim.schedule(function()
+            if _G.NoNeckPain == nil or _G.NoNeckPain.state == nil or not _G.NoNeckPain.state.enabled then
+                return
+            end
+            local state = require('no-neck-pain.state')
+            for _, side in ipairs({ "left", "right" }) do
+                require('no-neck-pain.colors').init(state:get_side_id(side), side)
+            end
+        end)
+    end,
 })
 
 lvim.builtin.treesitter.rainbow.enable = true
@@ -485,7 +554,7 @@ local function organize_imports()
         arguments = { vim.api.nvim_buf_get_name(0) },
         title = ""
     }
-    vim.lsp.client.exec_cmd(params)
+    vim.lsp.buf.execute_command(params)
 end
 lspconfig.tsserver.setup {
     commands = {
@@ -507,7 +576,7 @@ lvim.builtin.which_key.mappings["l"] = {
     o = { "<cmd>Telescope lsp_document_symbols<cr>", "Symbols" },
     r = { "<cmd>lua vim.lsp.buf.references()<cr>", "Go to References" },
     R = { "<cmd>lua vim.lsp.buf.rename()<cr>", "Rename" },
-    x = { "gl", "Show Line Diagnostics" },
+    x = { "<cmd>lua vim.diagnostic.open_float()<cr>", "Show Line Diagnostics" },
 }
 
 lvim.builtin.which_key.mappings["r"] = {
@@ -520,14 +589,12 @@ lvim.keys.normal_mode["<M-Left>"] = "<cmd>BufferLineCyclePrev<CR>"
 lvim.keys.normal_mode["<M-Right>"] = "<cmd>BufferLineCycleNext<CR>"
 
 -- Annoyingly unable to disable treesitter configs the proper way
-lvim.autocommands = {
+table.insert(lvim.autocommands, {
+    "BufEnter",
     {
-        "BufEnter",
-        {
-            command = "silent! TSDisable indent",
-        },
+        command = "silent! TSDisable indent",
     },
-}
+})
 -- vim.api.nvim_create_autocmd("BufEnter", {
 --     pattern = { "*.robot" },
 --     callback = function()
