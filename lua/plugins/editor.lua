@@ -30,8 +30,6 @@ return {
     {
         "nvim-treesitter/nvim-treesitter",
         opts = {
-            -- lvim ran `TSDisable indent` on every BufEnter; indenting is left to vim's smartindent
-            indent = { enable = false },
             highlight = {
                 enable = true,
                 disable = { "robot" },

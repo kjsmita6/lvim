@@ -10,6 +10,9 @@ pcall(vim.keymap.del, "n", "<leader>l")
 map("n", "<leader>/", "gcc", { remap = true, desc = "Toggle Comment" })
 map("x", "<leader>/", "gc", { remap = true, desc = "Toggle Comment" })
 
+-- Landing page (lvim had this on <leader>; via Alpha)
+map("n", "<leader>;", function() Snacks.dashboard() end, { desc = "Dashboard" })
+
 -- Files and search. <leader>f stays LazyVim's file/find group.
 map("n", "<leader>r", function() LazyVim.pick("files")() end, { desc = "Find Files" })
 map("n", "<leader>fs", "/", { desc = "Find (search in buffer)" })

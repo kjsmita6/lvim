@@ -103,6 +103,39 @@ return {
                     hint = icons.diagnostics.Hint,
                 },
             })
+            -- Active language servers, formatters and linters for the buffer, like lvim's lsp component
+            table.insert(sections.lualine_x, {
+                function()
+                    local buf = vim.api.nvim_get_current_buf()
+                    local clients = vim.lsp.get_clients({ bufnr = buf })
+                    if #clients == 0 then
+                        return "LSP Inactive"
+                    end
+
+                    local names = {}
+                    for _, client in ipairs(clients) do
+                        names[#names + 1] = client.name
+                    end
+
+                    local ok, conform = pcall(require, "conform")
+                    if ok then
+                        for _, formatter in ipairs(conform.list_formatters(buf)) do
+                            names[#names + 1] = formatter.name
+                        end
+                    end
+
+                    local lint_ok, lint = pcall(require, "lint")
+                    if lint_ok then
+                        vim.list_extend(names, lint.linters_by_ft[vim.bo[buf].filetype] or {})
+                    end
+
+                    return string.format("[%s]", table.concat(names, ", "))
+                end,
+                color = { gui = "bold" },
+                cond = function()
+                    return vim.o.columns > 100
+                end,
+            })
             table.insert(sections.lualine_x, "filetype")
         end,
     },

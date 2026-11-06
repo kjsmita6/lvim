@@ -36,14 +36,6 @@ return {
         opts = { ensure_installed = { "prettier", "groovy-language-server" } },
     },
 
-    -- Linting via the eslint language server
-    {
-        "esmuellert/nvim-eslint",
-        config = function()
-            require("nvim-eslint").setup({})
-        end,
-    },
-
     -- Tests (keys follow the lvim <leader>t group)
     { "nvim-neotest/neotest-jest" },
     {
